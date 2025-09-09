@@ -3,8 +3,8 @@
 This repo reproduces DreamBooth fine-tuning on Stable Diffusion 1.5 using Hugging Face Diffusers, with class prior preservation and a rare identifier token (e.g., `sks`). It includes Modal GPU scripts, inference, evaluation, and a short report.
 
 ## Contents
-- `train/`: Modal scripts for training (`modal_dreambooth.py`, `improved_modal_dreambooth.py`)
-- `inference/`: simple test scripts to load and sample models
+- `train/`: Modal training script (`improved_modal_dreambooth.py`)
+- `inference/`: simple test script to load and sample the trained model (`test_model_improved.py`)
 - `eval/`: Modal evaluation script + aggregated metrics (`metrics_summary.csv`)
 - `artifacts/`: qualitative grids with a reference column
 - `report/`: LaTeX report (`main.tex`) with figures and tables
@@ -32,30 +32,52 @@ The script writes the trained models to Modal volumes. Use `modal volume ls/get`
 
 ## Inference (local)
 ```bash
-python inference/test_model.py            # initial model
-python inference/test_model_improved.py   # improved/balanced model
+python inference/test_model_improved.py
 ```
-Edit paths inside the scripts to point to your downloaded model dir.
+Edit `model_path` inside the script to point to your downloaded model dir (e.g., `./improved-trained-model-v2`).
 
 ## Evaluation
-- Remote generation: `modal run eval/modal_eval.py` (produces images, grids, `summary.csv` in a Modal volume)
-- Download results: use `modal volume get` per folder
-- Local extended metrics:
+- Remote generation (base, overfit, underfit, balanced):
 ```bash
-# produces eval_results/extended_comparison_metrics.csv
-python eval/local_extended_metrics.py  # (optional script if you add it)
+modal run eval/modal_eval.py
 ```
-- Aggregated means: `eval/metrics_summary.csv`
+Outputs land in Modal volume `dreambooth-eval-results` under `/results`. Download with `modal volume get dreambooth-eval-results /results ...`.
+
+- Aggregated means: `eval/metrics_summary.csv` (already included)
 
 ## Report
 - See `report/main.tex` (3–5 pages). Insert your name/date.
 - Compile locally (TeX Live) or Overleaf.
+
+## Results (quick look)
+
+Qualitative grids (reference, base, overfit, underfit, balanced). A few examples:
+
+![Portrait](artifacts/grids_with_ref/a_portrait_photo_of_sks_dog.png)
+![Watercolor](artifacts/grids_with_ref/a_watercolor_painting_of_sks_dog.png)
+![Eiffel](artifacts/grids_with_ref/sks_dog_in_front_of_the_eiffel_tower.png)
+
+### Summary metrics (means)
+
+From `eval/metrics_summary.csv`:
+
+| Variant   | Subject fidelity (max) | Subject fidelity (mean) | Diversity (pairwise cos) | Prompt adherence |
+|-----------|-------------------------|--------------------------|--------------------------|------------------|
+| Overfit   | 0.881                   | 0.870                    | 0.915                    | 0.275            |
+| Underfit  | 0.784                   | 0.773                    | 0.880                    | 0.296            |
+| Balanced  | 0.855                   | 0.843                    | 0.903                    | 0.288            |
+
+Interpretation: overfit maximizes identity but weakens prompt adherence; underfit improves adherence but loses identity; balanced offers the best trade-off.
 
 ## Reproducibility Checklist
 - Fixed prompts/seeds (see `eval/modal_eval.py`)
 - Pinned package versions
 - Modal GPU type set to `"A100-40GB"`
 - No secrets or tokens committed
+
+### Notes on Modal usage
+- The training implementation clones all required code inside the Modal container, keeping this repo light and robust.
+- Each training run completed in ~5–10 minutes on A100-40GB and cost about $0.7–$0.9 per model (as observed), thanks to mixed precision, gradient checkpointing, and efficient regularization settings.
 
 ## References
 - DreamBooth: https://arxiv.org/abs/2208.12242
