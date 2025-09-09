@@ -79,6 +79,22 @@ Interpretation: overfit maximizes identity but weakens prompt adherence; underfi
 - The training implementation clones all required code inside the Modal container, keeping this repo light and robust.
 - Each training run completed in ~5–10 minutes on A100-40GB and cost about $0.7–$0.9 per model (as observed), thanks to mixed precision, gradient checkpointing, and efficient regularization settings.
 
+## Pretrained Weights
+
+Weights are available for evaluation in Google Drive:
+
+- Overfit: `trained-model` (DreamBooth without strong regularization)
+- Underfit: `improved-trained-model` (earlier run with too-strong regularization)
+- Balanced: `improved-trained-model-v2` (final recommended)
+
+Drive folder: https://drive.google.com/drive/folders/1Wt3pRJtkIsD8g0rD4uRuoE-BLd_qo-7J?usp=share_link
+
+Usage example (after download/unzip):
+```python
+from diffusers import StableDiffusionPipeline
+pipe = StableDiffusionPipeline.from_pretrained("./improved-trained-model-v2", safety_checker=None, requires_safety_checker=False)
+```
+
 ## References
 - DreamBooth: https://arxiv.org/abs/2208.12242
 - Diffusers DreamBooth tutorial: https://huggingface.co/docs/diffusers/en/training/dreambooth
