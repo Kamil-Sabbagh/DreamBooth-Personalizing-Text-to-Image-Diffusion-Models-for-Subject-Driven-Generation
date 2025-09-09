@@ -30,7 +30,7 @@ modal run train/improved_modal_dreambooth.py
 ```
 The script writes the trained models to Modal volumes. Use `modal volume ls/get` to download to local.
 
-## Inference (local)
+## Inference 
 ```bash
 python inference/test_model_improved.py
 ```
