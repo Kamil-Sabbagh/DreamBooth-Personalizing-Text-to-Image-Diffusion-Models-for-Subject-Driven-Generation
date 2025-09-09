@@ -46,8 +46,8 @@ Outputs land in Modal volume `dreambooth-eval-results` under `/results`. Downloa
 - Aggregated means: `eval/metrics_summary.csv` (already included)
 
 ## Report
-- See `report/main.tex` (3–5 pages). Insert your name/date.
-- Compile locally (TeX Live) or Overleaf.
+- PDF: `report/Reproducing_DreamBooth_with_Prior_Preservation_on_Stable_Diffusion.pdf`
+- (Legacy) LaTeX sources remain in `report/` if you want to edit and rebuild.
 
 ## Results (quick look)
 
