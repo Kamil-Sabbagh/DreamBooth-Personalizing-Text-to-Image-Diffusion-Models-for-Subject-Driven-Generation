@@ -7,7 +7,7 @@ This repo reproduces DreamBooth fine-tuning on Stable Diffusion 1.5 using Huggin
 - `inference/`: simple test script to load and sample the trained model (`test_model_improved.py`)
 - `eval/`: Modal evaluation script + aggregated metrics (`metrics_summary.csv`)
 - `artifacts/`: qualitative grids with a reference column
-- `report/`: LaTeX report with figures and tables
+- `report/`: LaTeX report (`main.tex`) with figures and tables
 - `configs/`: (optional) place accelerate configs here if needed
 
 ## Environment
@@ -94,6 +94,36 @@ Usage example (after download/unzip):
 from diffusers import StableDiffusionPipeline
 pipe = StableDiffusionPipeline.from_pretrained("./improved-trained-model-v2", safety_checker=None, requires_safety_checker=False)
 ```
+
+## Experiment configurations
+
+- Overfit (`trained-model`, local MPS)
+  - pretrained: `runwayml/stable-diffusion-v1-5`
+  - instance_prompt: "a photo of sks dog"
+  - resolution: 256
+  - train_batch_size: 1; gradient_accumulation_steps: 1
+  - learning_rate: 5e-6; lr_scheduler: constant; lr_warmup_steps: 0
+  - max_train_steps: 400
+  - mixed_precision: none (fp32)
+  - gradient_checkpointing: true
+  - with_prior_preservation: false; train_text_encoder: false
+
+- Underfit (`improved-trained-model`, Modal A100)
+  - Trained with prior preservation and text encoder enabled.
+  - Note: exact flags for this early run weren’t logged in-repo; it used stronger regularization than the balanced run (higher prior regularization effect).
+  - Typical settings used in this run family: resolution 512, train_batch_size 1, gradient_accumulation_steps 1, mixed_precision bf16, with_prior_preservation true, num_class_images 100, train_text_encoder true.
+
+- Balanced (`improved-trained-model-v2`, Modal A100)
+  - pretrained: `runwayml/stable-diffusion-v1-5`
+  - instance_prompt: "a photo of sks dog"; class_prompt: "a photo of dog"
+  - resolution: 512
+  - train_batch_size: 1; gradient_accumulation_steps: 1
+  - learning_rate: 1e-6; lr_scheduler: constant; lr_warmup_steps: 0
+  - max_train_steps: 800
+  - mixed_precision: bf16
+  - gradient_checkpointing: true
+  - with_prior_preservation: true; prior_loss_weight: 0.6; num_class_images: 100
+  - train_text_encoder: true; seed: 42
 
 ## References
 - DreamBooth: https://arxiv.org/abs/2208.12242
