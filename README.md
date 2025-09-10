@@ -53,7 +53,7 @@ Outputs land in Modal volume `dreambooth-eval-results` under `/results`. Downloa
 
 Qualitative grids (reference, base, overfit, underfit, balanced). A few examples:
 
-![Portrait](artifacts/grids_with_ref/a_portrait_photo_of_sks_dog.png)
+![Portrait](artifacts/grids_with_ref/sks_dog_on_the_beach_at_sunset__seed0.png)
 ![Watercolor](artifacts/grids_with_ref/a_watercolor_painting_of_sks_dog.png)
 ![Eiffel](artifacts/grids_with_ref/sks_dog_in_front_of_the_eiffel_tower.png)
 
