@@ -7,7 +7,7 @@ This repo reproduces DreamBooth fine-tuning on Stable Diffusion 1.5 using Huggin
 - `inference/`: simple test script to load and sample the trained model (`test_model_improved.py`)
 - `eval/`: Modal evaluation script + aggregated metrics (`metrics_summary.csv`)
 - `artifacts/`: qualitative grids with a reference column
-- `report/`: LaTeX report (`main.tex`) with figures and tables
+- `report/`: LaTeX report with figures and tables
 - `configs/`: (optional) place accelerate configs here if needed
 
 ## Environment
