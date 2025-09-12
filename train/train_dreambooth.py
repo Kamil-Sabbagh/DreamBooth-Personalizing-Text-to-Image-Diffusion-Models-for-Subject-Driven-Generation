@@ -112,15 +112,8 @@ def train_dreambooth(
             print("   modal volume put dreambooth-models target/ /target")
             print("🔄 Using HuggingFace dataset as fallback...")
         
-        # Fallback to HuggingFace dataset
-        local_dir = "/tmp/target"
-        os.makedirs(local_dir, exist_ok=True)
-        snapshot_download(
-            "diffusers/dog-example",
-            local_dir=local_dir, 
-            repo_type="dataset",
-            ignore_patterns=".gitattributes",
-        )
+        # No fallback - require proper target images
+        raise ValueError("Target images not found. Please upload your target images to Modal volume first.")
     
     # Clean up any cache directories
     cache_dir = os.path.join(local_dir, ".cache")
@@ -136,7 +129,9 @@ def train_dreambooth(
         raise ValueError("No image files found. Please check your target images.")
     
     # Prepare class images directory for prior preservation
-    class_dir = "/tmp/class_dog"
+    # Extract class name from class_prompt (e.g., "a photo of backpack" -> "backpack")
+    class_name = class_prompt.split()[-1]  # Get the last word (the object type)
+    class_dir = f"/tmp/class_{class_name}"
     os.makedirs(class_dir, exist_ok=True)
     print(f"Class images directory: {class_dir}")
     
