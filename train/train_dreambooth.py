@@ -99,12 +99,18 @@ def train_dreambooth(
     print("Loading training images from target/ directory...")
     local_dir = "/models/target"
     
-    # Check if target images exist in volume
-    if not os.path.exists(local_dir):
-        print(f"⚠️  Target images not found at {local_dir}")
-        print("📤 Please upload your target images first:")
-        print("   modal volume put dreambooth-models target/ /target")
-        print("🔄 Using HuggingFace dataset as fallback...")
+    # Check if target images exist in volume (handle nested directory structure)
+    if not os.path.exists(local_dir) or not any(f.endswith(('.jpg', '.jpeg', '.png')) for f in os.listdir(local_dir)):
+        # Try nested directory structure
+        nested_dir = "/models/target/target"
+        if os.path.exists(nested_dir) and any(f.endswith(('.jpg', '.jpeg', '.png')) for f in os.listdir(nested_dir)):
+            print(f"📁 Found images in nested directory: {nested_dir}")
+            local_dir = nested_dir
+        elif not os.path.exists(local_dir):
+            print(f"⚠️  Target images not found at {local_dir}")
+            print("📤 Please upload your target images first:")
+            print("   modal volume put dreambooth-models target/ /target")
+            print("🔄 Using HuggingFace dataset as fallback...")
         
         # Fallback to HuggingFace dataset
         local_dir = "/tmp/target"
