@@ -168,7 +168,7 @@ def main():
         print("📤 Uploading prompts.txt to Modal volume...")
         try:
             result = subprocess.run([
-                "modal", "volume", "put", "dreambooth-models", 
+                "modal", "volume", "put", "--force", "dreambooth-models", 
                 "prompts.txt", "/prompts.txt"
             ], capture_output=True, text=True, check=True)
             print("✅ prompts.txt uploaded successfully")

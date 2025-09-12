@@ -223,7 +223,7 @@ def main():
         print("📤 Uploading target images to Modal volume...")
         try:
             result = subprocess.run([
-                "modal", "volume", "put", "dreambooth-models", 
+                "modal", "volume", "put", "--force", "dreambooth-models", 
                 "target", "/target"
             ], capture_output=True, text=True, check=True)
             print("✅ Target images uploaded successfully")
