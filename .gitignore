@@ -1,16 +1,62 @@
+# Generated results and outputs
+generated_images/
+trained-model/
+eval_results/
+target_backup/
+
+# Python cache
 __pycache__/
 *.pyc
-.venv/
-venv/
-.env
-.ipynb_checkpoints/
+*.pyo
+*.pyd
+.Python
+*.so
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
 .DS_Store
-report/*.aux
-report/*.log
-report/*.out
-report/*.toc
-report/*.fls
-report/*.fdb_latexmk
-report/*.synctex.gz
-report/*.pdf
-dog/
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Modal cache
+.modal/
+
+# Large model files (use Git LFS instead)
+*.bin
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+
+# Environment files
+.env
+.venv
+venv/
+env/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# pytest cache
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
