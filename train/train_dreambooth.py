@@ -269,30 +269,31 @@ def main():
         local_model_dir = "./trained-model"
         os.makedirs(local_model_dir, exist_ok=True)
         
-        # Download the trained model files one by one
-        model_files = [
-            "model_index.json",
-            "scheduler",
-            "feature_extractor", 
-            "tokenizer",
-            "text_encoder",
-            "vae",
-            "unet",
-            "safety_checker",
-            "checkpoint-500"
-        ]
-        
-        for file_name in model_files:
-            try:
-                print(f"📥 Downloading {file_name}...")
-                result = subprocess.run([
-                    "modal", "volume", "get", "dreambooth-models", 
-                    f"/trained-model/{file_name}", 
-                    f"{local_model_dir}/{file_name}"
-                ], capture_output=True, text=True, check=True)
-                print(f"✅ {file_name} downloaded successfully")
-            except subprocess.CalledProcessError as e:
-                print(f"⚠️  Failed to download {file_name}: {e.stderr}")
+        # Download the entire trained-model directory
+        try:
+            print(f"📥 Downloading trained model directory...")
+            result = subprocess.run([
+                "modal", "volume", "get", "--force", "dreambooth-models", 
+                "/trained-model", local_model_dir
+            ], capture_output=True, text=True, check=True)
+            print(f"✅ Trained model downloaded successfully")
+            
+            # List downloaded files
+            if os.path.exists(local_model_dir):
+                downloaded_files = []
+                for root, dirs, files in os.walk(local_model_dir):
+                    for file in files:
+                        rel_path = os.path.relpath(os.path.join(root, file), local_model_dir)
+                        downloaded_files.append(rel_path)
+                
+                print(f"📊 Downloaded {len(downloaded_files)} files:")
+                for file in sorted(downloaded_files):
+                    print(f"   - {file}")
+                    
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Failed to download trained model: {e.stderr}")
+            print("📥 You can manually download with:")
+            print("   modal volume get --force dreambooth-models /trained-model ./trained-model")
         
         print(f"\n🎉 Model download complete!")
         print(f"📁 Trained model saved to: {local_model_dir}")
