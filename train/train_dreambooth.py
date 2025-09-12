@@ -224,7 +224,7 @@ def main():
         try:
             result = subprocess.run([
                 "modal", "volume", "put", "dreambooth-models", 
-                "target/", "/target"
+                "target", "/target"
             ], capture_output=True, text=True, check=True)
             print("✅ Target images uploaded successfully")
         except subprocess.CalledProcessError as e:
