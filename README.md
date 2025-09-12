@@ -3,12 +3,40 @@
 This repo reproduces DreamBooth fine-tuning on Stable Diffusion 1.5 using Hugging Face Diffusers, with class prior preservation and a rare identifier token (e.g., `sks`). It includes Modal GPU scripts, inference, evaluation, and a short report.
 
 ## Contents
-- `train/`: Modal training script (`improved_modal_dreambooth.py`)
-- `inference/`: simple test script to load and sample the trained model (`test_model_improved.py`)
-- `eval/`: Modal evaluation script + aggregated metrics (`metrics_summary.csv`)
-- `artifacts/`: qualitative grids with a reference column
-- `report/`: LaTeX report (`main.tex`) with figures and tables
-- `configs/`: (optional) place accelerate configs here if needed
+- `train/`: Modal training script (`train_dreambooth.py`)
+- `inference/`: Image generation script (`generate_images.py`)
+- `eval/`: Model evaluation script (`evaluate_model.py`) + aggregated metrics (`metrics_summary.csv`)
+- `artifacts/`: Qualitative comparison grids
+- `target/`: Your training images (3-5 photos of your subject)
+- `prompts.txt`: Custom prompts for image generation
+
+## Why Modal?
+
+This project uses [Modal](https://modal.com) for cloud-based training and evaluation to ensure **reproducible research** and **cost-effective experimentation**.
+
+### The Problem with Local Training
+Reproducing research results, especially in machine learning, often fails due to:
+- **Hardware differences**: Different GPUs, memory, and compute capabilities
+- **Software inconsistencies**: Varying package versions, CUDA versions, and system configurations  
+- **Time constraints**: Training can take hours or days on consumer hardware
+- **Resource limitations**: High-end GPUs (A100, H100) are expensive and often unavailable
+
+### Modal's Solution
+Modal provides **serverless AI infrastructure** that solves these challenges:
+
+- **💰 Cost-effective**: Train DreamBooth models for **less than $1** per experiment
+- **⚡ Fast**: Complete training in **under 10 minutes** on A100 GPUs
+- **🔄 Reproducible**: Identical hardware and software environment every time
+- **📈 Scalable**: Access to state-of-the-art GPUs (A100, H100) without upfront costs
+- **🛠️ Zero config**: Define requirements in Python, no infrastructure management needed
+
+### Key Benefits for This Project
+- **Consistent results**: Same GPU type and software stack for all experiments
+- **Rapid iteration**: Test different hyperparameters quickly and affordably
+- **No setup overhead**: No need to install CUDA, manage dependencies, or configure environments
+- **Professional infrastructure**: Enterprise-grade security and reliability
+
+Learn more at [modal.com](https://modal.com)
 
 ## Environment
 - Python 3.10 (Modal image)
@@ -17,33 +45,104 @@ This repo reproduces DreamBooth fine-tuning on Stable Diffusion 1.5 using Huggin
   - diffusers==0.35.1, transformers==4.56.1, accelerate==1.10.1, peft==0.17.1
   - open-clip-torch, pillow
 
-## Data
-- Instance images: 4–8 photos of your subject in `dog/` (local), used to compute identity metrics.
-- Class prior images are generated during training by the script.
+## Data Setup
 
-## Training on Modal
-1) Activate your Modal profile and login.
-2) Edit hyperparameters in `train/improved_modal_dreambooth.py` if desired (identifier token, prior loss weight, steps).
-3) Launch training on an A100-40GB:
-```bash
-modal run train/improved_modal_dreambooth.py
-```
-The script writes the trained models to Modal volumes. Use `modal volume ls/get` to download to local.
+### 1. Prepare Your Target Images
+Place 3-5 high-quality photos of your subject in the `target/` folder:
+- Use clear, well-lit photos with good resolution
+- Include different angles, lighting, and backgrounds  
+- Supported formats: JPG, PNG, WebP
+- The script will automatically resize them to 512x512 pixels
 
-## Inference 
+### 2. Configure Training Prompts
+**IMPORTANT**: Edit `training_config.txt` to match your subject:
+
 ```bash
-python inference/test_model_improved.py
+# Edit this file before training
+nano training_config.txt
 ```
-Edit `model_path` inside the script to point to your downloaded model dir (e.g., `./improved-trained-model-v2`).
+
+**Key settings to configure:**
+- `INSTANCE_PROMPT`: The special identifier for your subject (e.g., `a photo of sks dog`)
+- `CLASS_PROMPT`: The general category of your subject (e.g., `a photo of dog`)
+- `MAX_TRAIN_STEPS`: Number of training steps (1000 recommended)
+- `LEARNING_RATE`: Learning rate (2e-6 recommended)
+
+**Example configurations:**
+```bash
+# For a backpack
+INSTANCE_PROMPT=a photo of sks backpack
+CLASS_PROMPT=a photo of backpack
+
+# For a person
+INSTANCE_PROMPT=a photo of sks person
+CLASS_PROMPT=a photo of person
+
+# For a specific object
+INSTANCE_PROMPT=a photo of sks toy
+CLASS_PROMPT=a photo of toy
+```
+
+## Complete Pipeline (3 Commands)
+
+### Prerequisites
+1) **Prepare your images**: Place 3-5 photos of your subject in the `target/` folder
+2) **Configure training prompts**: Edit `training_config.txt` with your subject details
+3) **Configure generation prompts**: Edit `prompts.txt` with your custom prompts
+4) **Activate your Modal profile** and login
+
+### Run the Complete Pipeline
+```bash
+# 1. Train your DreamBooth model
+modal run train/train_dreambooth.py
+
+# 2. Generate images with your trained model  
+modal run inference/modal_generate_images.py
+
+# 3. Evaluate your model against the base model
+modal run eval/evaluate_model.py
+```
+
+**That's it!** 🎉 All three scripts automatically:
+- Upload your `target/` images and `prompts.txt` to Modal
+- Use your custom configuration from `training_config.txt`
+- Download results to your local machine
+- Handle all file management automatically
+
+
+### 3. Configure Generation Prompts
+Edit `prompts.txt` with your custom prompts for image generation:
+- Use the same special identifier from your training config
+- Example: `a portrait photo of sks backpack` (where `sks` represents your specific backpack)
+- The model will learn to associate your identifier with your subject
+
+## Image Generation
+The generation script will automatically read prompts from the `prompts.txt` file and generate 10 images.
+
+1) **Customize prompts** (optional): Edit the `prompts.txt` file with your desired prompts using the special identifier `sks`
+   - Example prompts are already provided in the file
+   - Use `sks` to refer to your trained subject
+   - If the file is empty or missing, default prompts will be used
+
+2) **Generate images**:
+```bash
+python inference/generate_images.py
+```
+Edit `model_path` inside the script to point to your downloaded model dir (e.g., `./trained-model`).
 
 ## Evaluation
-- Remote generation (base, overfit, underfit, balanced):
+The evaluation script compares the original Stable Diffusion model with your fine-tuned model to measure:
+- **Subject fidelity**: How well the model captures your specific subject
+- **Prompt adherence**: How well the model follows the given prompts  
+- **Diversity**: How varied the generated images are
+
+Run evaluation:
 ```bash
-modal run eval/modal_eval.py
+modal run eval/evaluate_model.py
 ```
 Outputs land in Modal volume `dreambooth-eval-results` under `/results`. Download with `modal volume get dreambooth-eval-results /results ...`.
 
-- Aggregated means: `eval/metrics_summary.csv` (already included)
+- Aggregated metrics: `eval/metrics_summary.csv` (already included)
 
 ## Report
 - PDF: `report/Reproducing_DreamBooth_with_Prior_Preservation_on_Stable_Diffusion.pdf`
@@ -111,7 +210,7 @@ pipe = StableDiffusionPipeline.from_pretrained("./improved-trained-model-v2", sa
 - Underfit (`improved-trained-model`, Modal A100)
   - Trained with prior preservation and text encoder enabled.
   - Note: exact flags for this early run weren’t logged in-repo; it used stronger regularization than the balanced run (higher prior regularization effect).
-  - Typical settings used in this run family: resolution 512, train_batch_size 1, gradient_accumulation_steps 1, mixed_precision bf16, with_prior_preservation true, num_class_images 100, train_text_encoder true.
+  - Typical settings used in this run family: resolution 512, train_batch_size 1, gradient_accumulation_steps 1, mixed_precision bf16, with_prior_preservation true, num_class_images 200, train_text_encoder true.
 
 - Balanced (`improved-trained-model-v2`, Modal A100)
   - pretrained: `runwayml/stable-diffusion-v1-5`

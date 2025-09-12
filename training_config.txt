@@ -1,0 +1,16 @@
+# DreamBooth Training Configuration
+# Edit these values to match your target subject
+
+# The special identifier token that will represent your subject
+# Use a unique identifier like "sks", "my", "a photo of [name]", etc.
+INSTANCE_PROMPT=a photo of sks backpack
+
+# The class prompt for regularization (what type of object this is)
+# This should be the general category of your subject
+CLASS_PROMPT=a photo of backpack
+
+# Number of training steps (more steps = better learning but longer training)
+MAX_TRAIN_STEPS=1000
+
+# Learning rate (higher = faster learning, lower = more stable)
+LEARNING_RATE=2e-6
