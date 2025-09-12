@@ -179,7 +179,30 @@ def main():
         print("⚠️  prompts.txt not found, using default prompts")
     
     generate_images.remote()
-    print("✅ Inference complete! Check the generated images.")
+    print("✅ Inference complete! Downloading generated images...")
+    
+    # Download generated images to local directory
+    local_images_dir = "./generated_images"
+    os.makedirs(local_images_dir, exist_ok=True)
+    
+    try:
+        result = subprocess.run([
+            "modal", "volume", "get", "--force", "dreambooth-models", 
+            "/generated_images", local_images_dir
+        ], capture_output=True, text=True, check=True)
+        print(f"✅ Generated images downloaded to: {local_images_dir}")
+        print("📊 Check the following files:")
+        if os.path.exists(local_images_dir):
+            image_files = [f for f in os.listdir(local_images_dir) if f.endswith('.png')]
+            for img_file in sorted(image_files):
+                print(f"   - {img_file}")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Error downloading generated images: {e}")
+        print("📥 You can manually download with:")
+        print("   modal volume get --force dreambooth-models /generated_images ./generated_images")
+        print("💡 If you get network timeouts, try again in a few minutes.")
+        print("🔗 You can also view the images in the Modal dashboard:")
+        print("   https://modal.com/apps/dreambooth/main")
 
 if __name__ == "__main__":
     main()
