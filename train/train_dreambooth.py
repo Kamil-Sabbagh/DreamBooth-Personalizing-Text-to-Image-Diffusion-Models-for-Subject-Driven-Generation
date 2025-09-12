@@ -64,14 +64,23 @@ def train_dreambooth(
     # Read configuration from file
     def read_config():
         config = {}
-        try:
-            with open("training_config.txt", "r") as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith("#") and "=" in line:
-                        key, value = line.split("=", 1)
-                        config[key.strip()] = value.strip()
-        except FileNotFoundError:
+        # Try to read from Modal volume first, then local file
+        config_paths = ["/models/training_config.txt", "training_config.txt"]
+        
+        for config_path in config_paths:
+            try:
+                with open(config_path, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            key, value = line.split("=", 1)
+                            config[key.strip()] = value.strip()
+                print(f"✅ Loaded configuration from: {config_path}")
+                break
+            except FileNotFoundError:
+                continue
+        
+        if not config:
             print("⚠️  training_config.txt not found, using default values")
             config = {
                 "INSTANCE_PROMPT": "a photo of sks backpack",
@@ -233,6 +242,21 @@ def main():
             print("🔄 Training will use fallback dataset")
     else:
         print("⚠️  target/ directory not found, training will use fallback dataset")
+    
+    # Upload training config to Modal volume
+    if os.path.exists("training_config.txt"):
+        print("📤 Uploading training_config.txt to Modal volume...")
+        try:
+            result = subprocess.run([
+                "modal", "volume", "put", "--force", "dreambooth-models", 
+                "training_config.txt", "/training_config.txt"
+            ], capture_output=True, text=True, check=True)
+            print("✅ training_config.txt uploaded successfully")
+        except subprocess.CalledProcessError as e:
+            print(f"⚠️  Failed to upload training_config.txt: {e.stderr}")
+            print("🔄 Using default configuration values")
+    else:
+        print("⚠️  training_config.txt not found, using default values")
     
     result = train_dreambooth.remote()
     print(f"Training result: {result}")
