@@ -53,6 +53,7 @@ def train_dreambooth(
     gradient_accumulation_steps: int = None, # Will be read from config file
     with_prior_preservation: bool = True,  # Enable prior preservation
     prior_loss_weight: float = None,  # Will be read from config file
+    download_model: bool = False,  # Whether to download model after training
 ):
     """Train DreamBooth with improved parameters and regularization"""
     
@@ -240,11 +241,12 @@ use_cpu: false
 
 # Local entrypoint
 @app.local_entrypoint()
-def main():
+def main(download_model: bool = False):
     import subprocess
     import os
     
     print("Starting DreamBooth training on Modal with A100...")
+    print(f"Download model after training: {download_model}")
     
     # Upload target images to Modal volume
     if os.path.exists("target") and os.path.isdir("target"):
@@ -276,75 +278,115 @@ def main():
     else:
         print("⚠️  training_config.txt not found, using default values")
     
-    result = train_dreambooth.remote()
+    result = train_dreambooth.remote(download_model=download_model)
     print(f"Training result: {result}")
     
     if result.get("status") == "success":
         print("✅ Training completed successfully!")
-        print("📥 Downloading trained model to local directory...")
         
-        # Create local directory for the trained model
-        local_model_dir = "./trained-model"
-        os.makedirs(local_model_dir, exist_ok=True)
-        
-        # Download the trained model files one by one (more reliable)
-        model_files = [
-            "model_index.json",
-            "scheduler",
-            "feature_extractor", 
-            "tokenizer",
-            "text_encoder",
-            "vae",
-            "unet",
-            "safety_checker"
-        ]
-        
-        successful_downloads = 0
-        failed_downloads = []
-        
-        for file_name in model_files:
-            try:
-                print(f"📥 Downloading {file_name}...")
-                result = subprocess.run([
-                    "modal", "volume", "get", "--force", "dreambooth-models", 
-                    f"/trained-model/{file_name}", 
-                    f"{local_model_dir}/{file_name}"
-                ], capture_output=True, text=True, check=True)
-                print(f"✅ {file_name} downloaded successfully")
-                successful_downloads += 1
-            except subprocess.CalledProcessError as e:
-                print(f"⚠️  Failed to download {file_name}: {e.stderr}")
-                failed_downloads.append(file_name)
-        
-        # Download checkpoint directories separately
-        checkpoint_dirs = ["checkpoint-500", "checkpoint-1000"]
-        for checkpoint_dir in checkpoint_dirs:
-            try:
-                print(f"📥 Downloading {checkpoint_dir}...")
-                result = subprocess.run([
-                    "modal", "volume", "get", "--force", "dreambooth-models", 
-                    f"/trained-model/{checkpoint_dir}", 
-                    f"{local_model_dir}/{checkpoint_dir}"
-                ], capture_output=True, text=True, check=True)
-                print(f"✅ {checkpoint_dir} downloaded successfully")
-                successful_downloads += 1
-            except subprocess.CalledProcessError as e:
-                print(f"⚠️  Failed to download {checkpoint_dir}: {e.stderr}")
-                failed_downloads.append(checkpoint_dir)
-        
-        print(f"\n📊 Download Summary:")
-        print(f"   ✅ Successfully downloaded: {successful_downloads} files")
-        if failed_downloads:
-            print(f"   ❌ Failed downloads: {failed_downloads}")
-            print("📥 You can manually retry failed downloads with:")
-            for failed_file in failed_downloads:
-                print(f"   modal volume get --force dreambooth-models /trained-model/{failed_file} ./trained-model/{failed_file}")
-        
-        print(f"\n🎉 Model download complete!")
-        print(f"📁 Trained model saved to: {local_model_dir}")
-        print(f"🚀 You can now run inference with: python inference/generate_images.py")
+        if download_model:
+            print("📥 Downloading trained model to local directory...")
+            
+            # Create local directory for the trained model
+            local_model_dir = "./trained-model"
+            os.makedirs(local_model_dir, exist_ok=True)
+            
+            # Download the trained model files one by one (more reliable)
+            # Note: Most of these are directories, not individual files
+            model_files = [
+                "model_index.json",  # This is a file
+                "scheduler",         # This is a directory
+                "feature_extractor", # This is a directory
+                "tokenizer",         # This is a directory
+                "text_encoder",      # This is a directory
+                "vae",              # This is a directory
+                "unet",             # This is a directory (largest ~3.2GB)
+                "safety_checker"     # This is a directory
+            ]
+            
+            successful_downloads = 0
+            failed_downloads = []
+            
+            print("\n📥 Downloading core model files...")
+            for file_name in model_files:
+                try:
+                    print(f"   📥 Downloading {file_name}...")
+                    result = subprocess.run([
+                        "modal", "volume", "get", "--force", "dreambooth-models", 
+                        f"/trained-model/{file_name}", 
+                        f"{local_model_dir}/{file_name}"
+                    ], capture_output=True, text=True, check=True)
+                    print(f"   ✅ {file_name} downloaded successfully")
+                    successful_downloads += 1
+                except subprocess.CalledProcessError as e:
+                    print(f"   ⚠️  Failed to download {file_name}: {e.stderr}")
+                    failed_downloads.append(file_name)
+                except Exception as e:
+                    print(f"   ⚠️  Error downloading {file_name}: {e}")
+                    failed_downloads.append(file_name)
+            
+            # Download checkpoint directories separately
+            print("\n📥 Downloading checkpoint files...")
+            checkpoint_dirs = ["checkpoint-1000", "checkpoint-1500", "checkpoint-2000"]
+            for checkpoint_dir in checkpoint_dirs:
+                try:
+                    print(f"   📥 Downloading {checkpoint_dir}...")
+                    result = subprocess.run([
+                        "modal", "volume", "get", "--force", "dreambooth-models", 
+                        f"/trained-model/{checkpoint_dir}", 
+                        f"{local_model_dir}/{checkpoint_dir}"
+                    ], capture_output=True, text=True, check=True)
+                    print(f"   ✅ {checkpoint_dir} downloaded successfully")
+                    successful_downloads += 1
+                except subprocess.CalledProcessError as e:
+                    print(f"   ⚠️  Failed to download {checkpoint_dir}: {e.stderr}")
+                    failed_downloads.append(checkpoint_dir)
+                except Exception as e:
+                    print(f"   ⚠️  Error downloading {checkpoint_dir}: {e}")
+                    failed_downloads.append(checkpoint_dir)
+            
+            print(f"\n📊 Download Summary:")
+            print(f"   ✅ Successfully downloaded: {successful_downloads} files/directories")
+            if failed_downloads:
+                print(f"   ❌ Failed downloads: {failed_downloads}")
+                print("\n📥 You can manually retry failed downloads with:")
+                for failed_file in failed_downloads:
+                    print(f"   modal volume get --force dreambooth-models /trained-model/{failed_file} ./trained-model/{failed_file}")
+                print("\n💡 Or use the separate download script:")
+                print(f"   python train/download_model.py")
+            
+            if successful_downloads > 0:
+                print(f"\n🎉 Model download completed!")
+                print(f"📁 Trained model saved to: {local_model_dir}")
+                
+                # Check if we have the essential files
+                essential_files = ["model_index.json", "unet", "text_encoder", "vae"]
+                missing_essential = []
+                for file_name in essential_files:
+                    if file_name in failed_downloads:
+                        missing_essential.append(file_name)
+                
+                if missing_essential:
+                    print(f"\n⚠️  Warning: Missing essential files: {missing_essential}")
+                    print("   The model may not work properly without these files.")
+                    print("   You can retry downloading them later using the download script.")
+                else:
+                    print("✅ All essential model files downloaded successfully!")
+                
+                print(f"🚀 You can now run inference with: python inference/generate_images.py")
+            else:
+                print("\n❌ No files were downloaded successfully.")
+                print("   You can try downloading later using: python train/download_model.py")
+        else:
+            print("\n🎉 Training completed successfully!")
+            print("📥 The trained model is available on Modal and can be downloaded using:")
+            print("   python train/download_model.py")
+            print("🚀 You can also run inference directly on Modal with: python inference/generate_images.py")
     else:
         print("❌ Training failed. Check the logs above for details.")
 
 if __name__ == "__main__":
+    # Example usage:
+    # To train without downloading: main()
+    # To train and download: main(download_model=True)
     main()

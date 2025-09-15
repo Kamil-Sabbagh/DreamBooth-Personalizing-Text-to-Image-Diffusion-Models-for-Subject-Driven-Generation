@@ -3,7 +3,7 @@
 This repo reproduces DreamBooth fine-tuning on Stable Diffusion 1.5 using Hugging Face Diffusers, with class prior preservation and a rare identifier token (e.g., `sks`). It includes Modal GPU scripts, inference, evaluation, and a short report.
 
 ## Contents
-- `train/`: Modal training script (`train_dreambooth.py`)
+- `train/`: Modal training script (`train_dreambooth.py`) + model download script (`download_model.py`)
 - `inference/`: Image generation script (`generate_images.py`)
 - `eval/`: Model evaluation script (`evaluate_model.py`) + aggregated metrics (`metrics_summary.csv`)
 - `artifacts/`: Qualitative comparison grids
@@ -83,6 +83,40 @@ INSTANCE_PROMPT=a photo of sks toy
 CLASS_PROMPT=a photo of toy
 ```
 
+## Training Workflow Options
+
+You have two flexible options for training and using your DreamBooth model:
+
+### Option 1: Train and Download (Traditional)
+Train your model and automatically download it to your local machine:
+```bash
+# Train with automatic download
+modal run train/train_dreambooth.py
+# Note: Modify main() call in train_dreambooth.py to main(download_model=True)
+```
+
+### Option 2: Train on Modal, Download Later (Recommended)
+Train your model on Modal and download it separately when needed:
+```bash
+# 1. Train your DreamBooth model (faster, no download)
+modal run train/train_dreambooth.py
+
+# 2. Download the trained model when ready
+python train/download_model.py
+
+# 3. Generate images with your trained model  
+modal run inference/modal_generate_images.py
+
+# 4. Evaluate your model against the base model
+modal run eval/evaluate_model.py
+```
+
+**Benefits of Option 2:**
+- ⚡ **Faster training**: No time spent downloading large model files
+- 💰 **Cost-effective**: Only pay for training time, download when convenient
+- 🔄 **Flexible**: Run inference directly on Modal or download locally
+- 📁 **Custom locations**: Download to any directory with `--output-dir`
+
 ## Complete Pipeline (3 Commands)
 
 ### Prerequisites
@@ -116,6 +150,29 @@ Edit `prompts.txt` with your custom prompts for image generation:
 - Example: `a portrait photo of sks backpack` (where `sks` represents your specific backpack)
 - The model will learn to associate your identifier with your subject
 
+## Model Download
+
+If you trained your model without downloading (Option 2), you can download it later using the dedicated download script:
+
+### Download Options
+```bash
+# Download to default location (./trained-model)
+python train/download_model.py
+
+# Download to custom location
+python train/download_model.py --output-dir /path/to/custom/location
+
+# Or run directly (if executable)
+./train/download_model.py
+```
+
+### Download Features
+- 📥 **One-by-one downloads**: More reliable than bulk downloads
+- 📊 **Progress tracking**: See download status for each file
+- 🛡️ **Error handling**: Retry failed downloads individually
+- 📁 **Flexible locations**: Save to any directory
+- ✅ **Validation**: Check for essential model files
+
 ## Image Generation
 The generation script will automatically read prompts from the `prompts.txt` file and generate 10 images.
 
@@ -126,6 +183,10 @@ The generation script will automatically read prompts from the `prompts.txt` fil
 
 2) **Generate images**:
 ```bash
+# Generate on Modal (recommended - uses trained model directly)
+modal run inference/modal_generate_images.py
+
+# Or generate locally (requires downloaded model)
 python inference/generate_images.py
 ```
 Edit `model_path` inside the script to point to your downloaded model dir (e.g., `./trained-model`).
