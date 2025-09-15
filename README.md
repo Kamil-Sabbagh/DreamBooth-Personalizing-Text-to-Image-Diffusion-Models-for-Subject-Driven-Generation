@@ -103,7 +103,7 @@ Train your model on Modal and download it separately when needed:
 # 1. Train your DreamBooth model (faster, no download)
 modal run train/train_dreambooth.py
 
-# 2. Download the trained model when ready
+# 2. Download the trained model when ready (optional)
 python train/download_model.py
 
 # 3. Generate images with your trained model  
@@ -119,38 +119,20 @@ modal run eval/evaluate_model.py
 - 🔄 **Flexible**: Run inference directly on Modal or download locally
 - 📁 **Custom locations**: Download to any directory with `--output-dir`
 
-## Complete Pipeline (3 Commands)
+## Prerequisites
 
-### Prerequisites
+Before running any commands, make sure you have:
+
 1) **Prepare your images**: Place 3-5 photos of your subject in the `target/` folder
 2) **Configure training prompts**: Edit `training_config.txt` with your subject details
 3) **Configure generation prompts**: Edit `prompts.txt` with your custom prompts
 4) **Activate your Modal profile** and login
 
-### Run the Complete Pipeline
-```bash
-# 1. Train your DreamBooth model
-modal run train/train_dreambooth.py
-
-# 2. Generate images with your trained model  
-modal run inference/modal_generate_images.py
-
-# 3. Evaluate your model against the base model
-modal run eval/evaluate_model.py
-```
-
-**That's it!** 🎉 All three scripts automatically:
+**That's it!** 🎉 All scripts automatically:
 - Upload your `target/` images and `prompts.txt` to Modal
 - Use your custom configuration from `training_config.txt`
 - Download results to your local machine
 - Handle all file management automatically
-
-
-### 3. Configure Generation Prompts
-Edit `prompts.txt` with your custom prompts for image generation:
-- Use the same special identifier from your training config
-- Example: `a portrait photo of sks backpack` (where `sks` represents your specific backpack)
-- The model will learn to associate your identifier with your subject
 
 ## Model Download
 
@@ -178,20 +160,14 @@ python train/download_model.py --output-dir /path/to/custom/location
 ## Image Generation
 The generation script will automatically read prompts from the `prompts.txt` file and generate 10 images.
 
-1) **Customize prompts** (optional): Edit the `prompts.txt` file with your desired prompts using the special identifier `sks`
-   - Example prompts are already provided in the file
-   - Use `sks` to refer to your trained subject
-   - If the file is empty or missing, default prompts will be used
+**Customize prompts** (optional): Edit the `prompts.txt` file with your desired prompts using the special identifier `sks`
+- Example prompts are already provided in the file
+- Use `sks` to refer to your trained subject
+- If the file is empty or missing, default prompts will be used
 
-2) **Generate images**:
-```bash
-# Generate on Modal (recommended - uses trained model directly)
-modal run inference/modal_generate_images.py
-
-# Or generate locally (requires downloaded model)
-python inference/generate_images.py
-```
-Edit `model_path` inside the script to point to your downloaded model dir (e.g., `./trained-model`).
+**Generate images**:
+- **On Modal** (recommended): Uses the trained model directly from Modal
+- **Locally**: Requires downloading the model first, then edit `model_path` in the script to point to your downloaded model directory (e.g., `./trained-model`)
 
 ## Evaluation
 The evaluation script compares the original Stable Diffusion model with your fine-tuned model to measure:
@@ -213,11 +189,14 @@ Outputs land in Modal volume `dreambooth-eval-results` under `/results`. Downloa
 
 ## Results (quick look)
 
-Qualitative grids (reference, base, overfit, underfit, balanced). A few examples:
+Qualitative examples of generated backpack images. A few examples:
 
-![Portrait](artifacts/grids_with_ref/sks_dog_running_in_a_park__seed0.png)
-![Watercolor](artifacts/grids_with_ref/a_watercolor_painting_of_sks_dog.png)
-![Eiffel](artifacts/grids_with_ref/sks_dog_in_front_of_the_eiffel_tower.png)
+![Eiffel Tower](artifacts/backpack/01_sks_backpack_in_front_of_the_Eiffel_Tower.png)
+![Watercolor](artifacts/backpack/02_a_watercolor_painting_of_sks_backpack.png)
+![Beach Sunset](artifacts/backpack/03_sks_backpack_on_the_beach_at_sunset.png)
+![Studio Portrait](artifacts/backpack/04_studio_portrait_of_sks_backpack_soft_lighting.png)
+![Travel Stickers](artifacts/backpack/05_sks_backpack_with_travel_stickers.png)
+![Blue Car](artifacts/backpack/06_sks_backpack_next_to_a_blue_car.png)
 
 ### Summary metrics (means)
 
