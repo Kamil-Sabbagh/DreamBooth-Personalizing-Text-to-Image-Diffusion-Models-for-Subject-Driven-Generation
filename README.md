@@ -96,6 +96,7 @@ Train your model and automatically download it to your local machine:
 modal run train/train_dreambooth.py
 # Note: Modify main() call in train_dreambooth.py to main(download_model=True)
 ```
+**This will automatically download the trained model files after training completes.**
 
 ### Option 2: Train on Modal, Download Later (Recommended)
 Train your model on Modal and download it separately when needed:
@@ -150,6 +151,8 @@ python train/download_model.py --output-dir /path/to/custom/location
 ./train/download_model.py
 ```
 
+**This script will download all trained model files from Modal to your local machine.**
+
 ### Download Features
 - 📥 **One-by-one downloads**: More reliable than bulk downloads
 - 📊 **Progress tracking**: See download status for each file
@@ -181,7 +184,7 @@ modal run eval/evaluate_model.py
 ```
 Outputs land in Modal volume `dreambooth-eval-results` under `/results`. Download with `modal volume get dreambooth-eval-results /results ...`.
 
-- Aggregated metrics: `eval/metrics_summary.csv` (already included)
+- Aggregated metrics: `eval/metrics_summary.csv` 
 
 ## Report
 - PDF: `report/Reproducing_DreamBooth_with_Prior_Preservation_on_Stable_Diffusion.pdf`
@@ -196,7 +199,14 @@ Qualitative examples of generated backpack images. A few examples:
 ![Beach Sunset](artifacts/backpack/03_sks_backpack_on_the_beach_at_sunset.png)
 ![Studio Portrait](artifacts/backpack/04_studio_portrait_of_sks_backpack_soft_lighting.png)
 ![Travel Stickers](artifacts/backpack/05_sks_backpack_with_travel_stickers.png)
-![Blue Car](artifacts/backpack/06_sks_backpack_next_to_a_blue_car.png)
+
+### Dog Grid Examples (Reference Results)
+
+Qualitative grids showing reference, base, overfit, underfit, and balanced results:
+
+![Portrait](artifacts/Dog_grids_with_ref/sks_dog_running_in_a_park__seed0.png)
+![Watercolor](artifacts/Dog_grids_with_ref/a_watercolor_painting_of_sks_dog.png)
+![Eiffel](artifacts/Dog_grids_with_ref/sks_dog_in_front_of_the_eiffel_tower.png)
 
 ### Summary metrics (means)
 
@@ -214,7 +224,7 @@ Interpretation: overfit maximizes identity but weakens prompt adherence; underfi
 - Fixed prompts/seeds (see `eval/modal_eval.py`)
 - Pinned package versions
 - Modal GPU type set to `"A100-40GB"`
-- No secrets or tokens committed
+
 
 ### Notes on Modal usage
 - The training implementation clones all required code inside the Modal container, keeping this repo light and robust.
@@ -222,7 +232,7 @@ Interpretation: overfit maximizes identity but weakens prompt adherence; underfi
 
 ## Pretrained Weights
 
-Weights are available for evaluation in Google Drive:
+Weights (for sks dog) are available for evaluation in Google Drive:
 
 - Overfit: `trained-model` (DreamBooth without strong regularization)
 - Underfit: `improved-trained-model` (earlier run with too-strong regularization)
@@ -230,11 +240,6 @@ Weights are available for evaluation in Google Drive:
 
 Drive folder: https://drive.google.com/drive/folders/1Wt3pRJtkIsD8g0rD4uRuoE-BLd_qo-7J?usp=share_link
 
-Usage example (after download/unzip):
-```python
-from diffusers import StableDiffusionPipeline
-pipe = StableDiffusionPipeline.from_pretrained("./improved-trained-model-v2", safety_checker=None, requires_safety_checker=False)
-```
 
 ## Experiment configurations
 
