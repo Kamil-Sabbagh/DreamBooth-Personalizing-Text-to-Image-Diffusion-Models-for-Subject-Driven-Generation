@@ -45,13 +45,14 @@ def train_dreambooth(
     model_name: str = "runwayml/stable-diffusion-v1-5",
     instance_prompt: str = None,  # Will be read from config file
     class_prompt: str = None,     # Will be read from config file
-    resolution: int = 512,
-    train_batch_size: int = 1,
+    resolution: int = None,       # Will be read from config file
+    train_batch_size: int = None, # Will be read from config file
     learning_rate: float = None,  # Will be read from config file
     max_train_steps: int = None,  # Will be read from config file
-    num_class_images: int = 200,  # More regularization images
+    num_class_images: int = None, # Will be read from config file
+    gradient_accumulation_steps: int = None, # Will be read from config file
     with_prior_preservation: bool = True,  # Enable prior preservation
-    prior_loss_weight: float = 0.5,  # Lower weight to focus more on instance learning
+    prior_loss_weight: float = None,  # Will be read from config file
 ):
     """Train DreamBooth with improved parameters and regularization"""
     
@@ -85,8 +86,13 @@ def train_dreambooth(
             config = {
                 "INSTANCE_PROMPT": "a photo of sks backpack",
                 "CLASS_PROMPT": "a photo of backpack", 
-                "MAX_TRAIN_STEPS": "1000",
-                "LEARNING_RATE": "2e-6"
+                "MAX_TRAIN_STEPS": "2000",
+                "LEARNING_RATE": "1e-6",
+                "TRAIN_BATCH_SIZE": "2",
+                "GRADIENT_ACCUMULATION_STEPS": "2",
+                "PRIOR_LOSS_WEIGHT": "0.3",
+                "NUM_CLASS_IMAGES": "200",
+                "RESOLUTION": "512"
             }
         return config
     
@@ -95,14 +101,24 @@ def train_dreambooth(
     # Use config values or fallback to parameters/defaults
     instance_prompt = instance_prompt or config.get("INSTANCE_PROMPT", "a photo of sks backpack")
     class_prompt = class_prompt or config.get("CLASS_PROMPT", "a photo of backpack")
-    max_train_steps = max_train_steps or int(config.get("MAX_TRAIN_STEPS", "1000"))
-    learning_rate = learning_rate or float(config.get("LEARNING_RATE", "2e-6"))
+    max_train_steps = max_train_steps or int(config.get("MAX_TRAIN_STEPS", "2000"))
+    learning_rate = learning_rate or float(config.get("LEARNING_RATE", "1e-6"))
+    train_batch_size = train_batch_size or int(config.get("TRAIN_BATCH_SIZE", "2"))
+    gradient_accumulation_steps = gradient_accumulation_steps or int(config.get("GRADIENT_ACCUMULATION_STEPS", "2"))
+    prior_loss_weight = prior_loss_weight or float(config.get("PRIOR_LOSS_WEIGHT", "0.3"))
+    num_class_images = num_class_images or int(config.get("NUM_CLASS_IMAGES", "200"))
+    resolution = resolution or int(config.get("RESOLUTION", "512"))
     
     print(f"🎯 Training Configuration:")
     print(f"   Instance Prompt: {instance_prompt}")
     print(f"   Class Prompt: {class_prompt}")
     print(f"   Max Steps: {max_train_steps}")
     print(f"   Learning Rate: {learning_rate}")
+    print(f"   Batch Size: {train_batch_size}")
+    print(f"   Gradient Accumulation Steps: {gradient_accumulation_steps}")
+    print(f"   Prior Loss Weight: {prior_loss_weight}")
+    print(f"   Num Class Images: {num_class_images}")
+    print(f"   Resolution: {resolution}")
     
     # Use target images from Modal volume (uploaded by user)
     print("Loading training images from target/ directory...")
@@ -193,10 +209,10 @@ use_cpu: false
         "--train_text_encoder",
         "--resolution", str(resolution),
         "--train_batch_size", str(train_batch_size),
-        "--gradient_accumulation_steps", "1",
+        "--gradient_accumulation_steps", str(gradient_accumulation_steps),
         "--learning_rate", str(learning_rate),
-        "--lr_scheduler", "constant",
-        "--lr_warmup_steps", "0",
+        "--lr_scheduler", "cosine",
+        "--lr_warmup_steps", "100",
         "--max_train_steps", str(max_train_steps),
         "--mixed_precision", "bf16",
         "--gradient_checkpointing",
@@ -204,6 +220,8 @@ use_cpu: false
         "--prior_loss_weight", str(prior_loss_weight),
         "--num_class_images", str(num_class_images),  # Number of regularization images
         "--seed", "42",  # For reproducibility
+        "--checkpointing_steps", "500",  # Save checkpoints every 500 steps
+        "--checkpoints_total_limit", "3",  # Keep only 3 checkpoints
     ]
     
     print(f"Running improved training command: {' '.join(cmd)}")

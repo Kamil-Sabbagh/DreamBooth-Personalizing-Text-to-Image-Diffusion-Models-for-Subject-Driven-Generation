@@ -1,4 +1,4 @@
-# DreamBooth Training Configuration
+# DreamBooth Training Configuration - IMPROVED PARAMETERS
 # Edit these values to match your target subject
 
 # The special identifier token that will represent your subject
@@ -10,7 +10,16 @@ INSTANCE_PROMPT=a photo of sks backpack
 CLASS_PROMPT=a photo of backpack
 
 # Number of training steps (more steps = better learning but longer training)
-MAX_TRAIN_STEPS=1000
+# Increased from 1000 to 2000 for better learning
+MAX_TRAIN_STEPS=2000
 
 # Learning rate (higher = faster learning, lower = more stable)
-LEARNING_RATE=2e-6
+# Reduced from 2e-6 to 1e-6 for more stable training
+LEARNING_RATE=1e-6
+
+# Additional training parameters for better results
+TRAIN_BATCH_SIZE=2
+GRADIENT_ACCUMULATION_STEPS=2
+PRIOR_LOSS_WEIGHT=0.3
+NUM_CLASS_IMAGES=200
+RESOLUTION=512
