@@ -6,7 +6,7 @@ This repo reproduces DreamBooth fine-tuning on Stable Diffusion 1.5 using Huggin
 - `train/`: Modal training script (`train_dreambooth.py`) + model download script (`download_model.py`)
 - `inference/`: Image generation script (`generate_images.py`)
 - `eval/`: Model evaluation script (`evaluate_model.py`) + aggregated metrics (`metrics_summary.csv`)
-- `artifacts/`: Qualitative comparison grids
+- `artifacts/`: Qualitative comparison grids and results
 - `target/`: Your training images (3-5 photos of your subject)
 - `prompts.txt`: Custom prompts for image generation
 
@@ -53,6 +53,8 @@ Place 3-5 high-quality photos of your subject in the `target/` folder:
 - Include different angles, lighting, and backgrounds  
 - Supported formats: JPG, PNG, WebP
 - The script will automatically resize them to 512x512 pixels
+
+The choice of the target image can heavily impact on the choice of the parameters used, more complex and detailed targets will require better training.
 
 ### 2. Configure Training Prompts
 **IMPORTANT**: Edit `training_config.txt` to match your subject:
